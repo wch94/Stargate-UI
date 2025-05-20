@@ -1,2 +1,2 @@
-# ACTS-UI
-Astronaut Career Tracking System (ACTS) - UI
+# Stargate-UI
+Stargate Astronaut Career Tracking System (ACTS) - UI

@@ -1,16 +1,14 @@
 import { Component, ViewChild, OnInit } from '@angular/core';
-import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatSort, MatSortModule, Sort } from '@angular/material/sort';
-import { MatTableModule } from '@angular/material/table';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
+import { MatSort, Sort } from '@angular/material/sort';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Client, GetPeopleResponse } from '../../api/stargate-api-client';
+import { MatDialog } from '@angular/material/dialog';
+import { Client, CreatePersonCommand, PersonAstronautDto, UpdatePersonCommand } from '../../api/stargate-api-client';
 import { finalize } from 'rxjs';
+import { PersonDialogComponent } from '../../components/person-dialog/person-dialog.component';
+import { MaterialModule } from '../../shared/material.module';
+import { MatTableDataSource } from '@angular/material/table';
 
 @Component({
   selector: 'app-people-list',
@@ -18,28 +16,21 @@ import { finalize } from 'rxjs';
   imports: [
     CommonModule,
     FormsModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatCardModule,
-    MatProgressSpinnerModule 
+    MaterialModule
   ],
   templateUrl: './people-list.component.html',
   styleUrl: './people-list.component.scss'
 })
 export class PeopleListComponent implements OnInit {
-  data: any[] = [];
-  displayedColumns: string[] = ['id', 'name', 'currentRank', 'currentDutyTitle'];
+  dataSource = new MatTableDataSource<PersonAstronautDto>([]);
+  displayedColumns = ['id', 'name', 'currentRank', 'currentDutyTitle', 'careerStartDate', 'careerEndDate', 'actions'];
 
   filterName = '';
-  sortColumn = 'name';
+  sortColumn = 'id';
   sortDirection = 'asc';
 
   pageIndex = 0;
-  pageSize = 10;
+  pageSize = 5;
   totalItems = 0;
 
   loading = false;
@@ -47,14 +38,14 @@ export class PeopleListComponent implements OnInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  constructor(private api: Client) {}
+  constructor(private api: Client, private dialog: MatDialog) {}
 
   ngOnInit(): void {
     this.loadData();
   }
 
   loadData(): void {
-  this.loading = true;
+    this.loading = true;
     this.api.personGET(
       this.filterName || undefined,
       this.sortColumn,
@@ -64,9 +55,8 @@ export class PeopleListComponent implements OnInit {
     )
     .pipe(finalize(() => this.loading = false))
     .subscribe(response => {
-      const typed = response as unknown as GetPeopleResponse;
-      this.data = typed.data ?? [];
-      this.totalItems = typed.totalItems ?? 0;
+      this.dataSource.data = response.data ?? [];
+      this.totalItems = response.totalItems ?? 0;
     });
   }
 
@@ -85,5 +75,55 @@ export class PeopleListComponent implements OnInit {
     this.sortColumn = sort.active;
     this.sortDirection = sort.direction || 'asc';
     this.loadData();
+  }
+
+  openAddDialog() {
+    const dialogRef = this.dialog.open(PersonDialogComponent, {
+      width: '400px',
+      data: { isEdit: false }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        const createPerson = new CreatePersonCommand();
+        createPerson.name = result.name;
+
+        if (result.isAstronaut) {
+          createPerson.currentRank = result.rank;
+          createPerson.currentDutyTitle = result.title;
+          createPerson.careerStartDate = result.startDate ? new Date(result.startDate) : undefined;
+          createPerson.careerEndDate = result.endDate ? new Date(result.endDate) : undefined;
+        }
+
+        this.api.personPOST(createPerson)
+          .pipe(finalize(() => this.loadData()))
+          .subscribe();
+      }
+    });
+  }
+
+  openEditDialog(person: PersonAstronautDto) {
+    const dialogRef = this.dialog.open(PersonDialogComponent, {
+      width: '400px',
+      data: { isEdit: true, person }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        const updatePerson = new UpdatePersonCommand();
+        updatePerson.name = result.name;
+
+        if (result.isAstronaut) {
+          updatePerson.currentRank = result.rank;
+          updatePerson.currentDutyTitle = result.title;
+          updatePerson.careerStartDate = result.startDate ? new Date(result.startDate) : undefined;
+          updatePerson.careerEndDate = result.endDate ? new Date(result.endDate) : undefined;
+        }
+
+        this.api.personPUT(person.id!, updatePerson)
+          .pipe(finalize(() => this.loadData()))
+          .subscribe();
+      }
+    });
   }
 }

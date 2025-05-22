@@ -30,7 +30,7 @@ export class Client {
      * @return OK
      */
     byPerson(personId: number): Observable<void> {
-        let url_ = this.baseUrl + "/api/v1/duty/by-person/{personId}";
+        let url_ = this.baseUrl + "/v1/duty/by-person/{personId}";
         if (personId === undefined || personId === null)
             throw new Error("The parameter 'personId' must be defined.");
         url_ = url_.replace("{personId}", encodeURIComponent("" + personId));
@@ -81,7 +81,7 @@ export class Client {
      * @return OK
      */
     person(personId: number, body: CreateAstronautDutyRequest | undefined): Observable<void> {
-        let url_ = this.baseUrl + "/api/v1/duty/person/{personId}";
+        let url_ = this.baseUrl + "/v1/duty/person/{personId}";
         if (personId === undefined || personId === null)
             throw new Error("The parameter 'personId' must be defined.");
         url_ = url_.replace("{personId}", encodeURIComponent("" + personId));
@@ -140,7 +140,7 @@ export class Client {
      * @return OK
      */
     personGET(name: string | undefined, sortBy: string | undefined, desc: boolean | undefined, page: number | undefined, pageSize: number | undefined): Observable<GetPeopleResponse> {
-        let url_ = this.baseUrl + "/api/v1/Person?";
+        let url_ = this.baseUrl + "/v1/Person?";
         if (name === null)
             throw new Error("The parameter 'name' cannot be null.");
         else if (name !== undefined)
@@ -212,7 +212,7 @@ export class Client {
      * @return OK
      */
     personPOST(body: CreatePersonCommand | undefined): Observable<void> {
-        let url_ = this.baseUrl + "/api/v1/Person";
+        let url_ = this.baseUrl + "/v1/Person";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -263,7 +263,7 @@ export class Client {
      * @return OK
      */
     personGET2(id: number): Observable<void> {
-        let url_ = this.baseUrl + "/api/v1/Person/{id}";
+        let url_ = this.baseUrl + "/v1/Person/{id}";
         if (id === undefined || id === null)
             throw new Error("The parameter 'id' must be defined.");
         url_ = url_.replace("{id}", encodeURIComponent("" + id));
@@ -314,7 +314,7 @@ export class Client {
      * @return OK
      */
     personPUT(id: number, body: UpdatePersonCommand | undefined): Observable<void> {
-        let url_ = this.baseUrl + "/api/v1/Person/{id}";
+        let url_ = this.baseUrl + "/v1/Person/{id}";
         if (id === undefined || id === null)
             throw new Error("The parameter 'id' must be defined.");
         url_ = url_.replace("{id}", encodeURIComponent("" + id));
@@ -368,7 +368,7 @@ export class Client {
      * @return OK
      */
     personDELETE(id: number): Observable<void> {
-        let url_ = this.baseUrl + "/api/v1/Person/{id}";
+        let url_ = this.baseUrl + "/v1/Person/{id}";
         if (id === undefined || id === null)
             throw new Error("The parameter 'id' must be defined.");
         url_ = url_.replace("{id}", encodeURIComponent("" + id));
@@ -590,9 +590,10 @@ export interface IGetPeopleResponse {
 export class PersonAstronautDto implements IPersonAstronautDto {
     id?: number;
     name?: string | undefined;
+    readonly isAstronaut?: boolean;
     currentRank?: string | undefined;
     currentDutyTitle?: string | undefined;
-    careerStartDate?: Date;
+    careerStartDate?: Date | undefined;
     careerEndDate?: Date | undefined;
 
     constructor(data?: IPersonAstronautDto) {
@@ -608,6 +609,7 @@ export class PersonAstronautDto implements IPersonAstronautDto {
         if (_data) {
             this.id = _data["id"];
             this.name = _data["name"];
+            (<any>this).isAstronaut = _data["isAstronaut"];
             this.currentRank = _data["currentRank"];
             this.currentDutyTitle = _data["currentDutyTitle"];
             this.careerStartDate = _data["careerStartDate"] ? new Date(_data["careerStartDate"].toString()) : <any>undefined;
@@ -626,6 +628,7 @@ export class PersonAstronautDto implements IPersonAstronautDto {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
         data["name"] = this.name;
+        data["isAstronaut"] = this.isAstronaut;
         data["currentRank"] = this.currentRank;
         data["currentDutyTitle"] = this.currentDutyTitle;
         data["careerStartDate"] = this.careerStartDate ? this.careerStartDate.toISOString() : <any>undefined;
@@ -637,9 +640,10 @@ export class PersonAstronautDto implements IPersonAstronautDto {
 export interface IPersonAstronautDto {
     id?: number;
     name?: string | undefined;
+    isAstronaut?: boolean;
     currentRank?: string | undefined;
     currentDutyTitle?: string | undefined;
-    careerStartDate?: Date;
+    careerStartDate?: Date | undefined;
     careerEndDate?: Date | undefined;
 }
 
